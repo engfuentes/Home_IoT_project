@@ -1,0 +1,3 @@
+RPI.BME280
+paho-mqtt
+RPI.GPIO

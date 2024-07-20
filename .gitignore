@@ -1,3 +1,13 @@
+# Custom
+data/grafana-data/
+data/influxdb-config/
+data/influxdb-data/
+data/node-red-data/
+data/mqtt/data/
+data/mqtt/log/
+data/mqtt/config/pwfile
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

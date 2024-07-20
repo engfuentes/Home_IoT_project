@@ -1,0 +1,83 @@
+# Run in the terminal: docker-compose up -d --build
+version: "3"
+
+services: 
+  sensor-publisher:
+    build:
+      context: .
+      dockerfile: ./sensor_publisher/Dockerfile
+    hostname: sensor-publisher
+    container_name: sensor-publisher
+    restart: unless-stopped
+    volumes:
+      - ./sensor_publisher:/usr/src/app
+    environment:
+      MOSQUITTO_USERNAME: ${MOSQUITTO_USERNAME}
+      MOSQUITTO_PASSWORD: ${MOSQUITTO_PASSWORD}
+    devices:  
+      - "/dev/i2c-1:/dev/i2c-1"  
+    networks:
+      - iot-network
+
+  mosquitto:
+    image: eclipse-mosquitto:2.0
+    container_name: mosquitto
+    hostname: mosquitto
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./data/mqtt:/mosquitto/
+    restart: unless-stopped
+    networks:
+      - iot-network
+
+  node-red:
+    image: nodered/node-red:4.0
+    container_name: node-red
+    hostname: node-red
+    ports:
+      - "1880:1880"
+    volumes:
+      - ./data/node-red-data:/data
+    restart: unless-stopped
+    networks:
+      - iot-network
+
+  influxdb:
+    image: influxdb:2.7.7
+    container_name: influxdb
+    hostname: influxdb
+    ports:
+      - "8086:8086"        
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: ${INFLUXDB_INIT_USERNAME}
+      DOCKER_INFLUXDB_INIT_PASSWORD: ${INFLUXDB_INIT_PASSWORD}
+      DOCKER_INFLUXDB_INIT_ORG: ${INFLUXDB_INIT_ORG}
+      DOCKER_INFLUXDB_INIT_BUCKET: ${INFLUXDB_INIT_BUCKET}
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: ${INFLUXDB_INIT_ADMIN_TOKEN}
+    # (Optional) change retention time
+    #  DOCKER_INFLUXDB_INIT_RETENTION: 1w  # (optional) configure data retention 1 week
+    volumes:
+      - ./data/influxdb-data:/var/lib/influxdb2
+      - ./data/influxdb-config:/etc/influxdb2
+    restart: unless-stopped
+    networks:
+      - iot-network
+
+  grafana:
+    image: grafana/grafana:10.0.0
+    container_name: grafana
+    hostname: grafana
+    ports:
+      - "3000:3000"
+    user: "0"
+    volumes:
+      - ./data/grafana-data:/var/lib/grafana
+    restart: unless-stopped
+    networks:
+      - iot-network
+  
+networks:
+  iot-network:
